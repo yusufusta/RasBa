@@ -18,7 +18,7 @@
       "issues": "https://github.com/quiec/rasba/issues",
       "source": "https://github.com/quiec/rasba"
     },
-    "license": "GPLV3",
+    "license": "GPL-3.0-or-later",
     "require": {
         "imangazaliev/didom": "^1.16",
         "tholu/php-packer": "^0.2.0"
