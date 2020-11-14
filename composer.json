@@ -1,0 +1,31 @@
+{
+    "name": "quiec/rasba",
+    "description": "RasBa, makes it easy to create web pages with PHP.",
+    "keywords": [
+      "html",
+      "js",
+      "website"
+    ],
+    "minimum-stability": "stable",
+    "authors": [
+      {
+        "name": "Yusuf Usta",
+        "email": "yusuf@quiec.tech",
+        "homepage": "https://github.com/quiec"
+      }
+    ],
+    "support": {
+      "issues": "https://github.com/quiec/rasba/issues",
+      "source": "https://github.com/quiec/rasba"
+    },
+    "license": "GPLV3",
+    "require": {
+        "imangazaliev/didom": "^1.16",
+        "tholu/php-packer": "^0.2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rasba\\": "./src/"
+        }
+    }
+}
