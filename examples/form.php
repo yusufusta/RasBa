@@ -1,40 +1,59 @@
 <?php
-require './vendor/autoload.php';
-use Rasba\Html;
-$Html = new Html(true, ['lang' => 'en']);
+require '../vendor/autoload.php';
+use Symfony\Component\HttpFoundation\Session\Session;
 
-$Html->addScript(JQUERY_SLIM);
-$Html->addStyle(BOOTSTRAP_MIN);
-$Html->addStyle("body {
-  min-height: 75rem;
-}");
-$ViewPort = $Html->__meta__('', ['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1, shrink-to-fit=no']);
-$Title = $Html->__title__('RasBa Login');
-$Html->addHead([$Title, $ViewPort]);
+$Session = new Session();
 
-if (!empty($_POST['username']) || !empty($_POST['password'])) {
-    if ($_POST['username'] == 'rasta' && $_POST['password'] == 'baba') {
-        $Html->addScript('alert("Successfully logged!"); location.href="https://www.youtube.com/watch?v=YqwgeVeOIpI"');
-    } else {
-        $Html->addScript('alert("Invalid username or password!");');
-    }
-}
-$Jumbotron = $Html->div('', ['class' => 'jumbotron mt-3']);
-$Form = $Html->__form__('', ['action' => "/form.php", 'method' => 'post']);
-$FormGroup = $Html->__div__('', ['class' => 'form-group']);
-
-$Form->appendChild([
-    $FormGroup->appendChild($Html->input('', ['class' => 'form-control', 'placeholder' => 'Username', 'name' => 'username'])),
-    $Html->br(),
-    $FormGroup->appendChild($Html->input('', ['class' => 'form-control', 'placeholder' => 'Password', 'name' => 'password'])),
-    $Html->br(),
-    $Html->button('Submit', ['type' => 'submit', 'class' => 'btn btn-primary'])
+$Rasba = new Rasba\Router([
+    'html_attr' => ['lang' => 'en'],
+    'minify' => true
 ]);
-$Jumbotron->appendChild($Form);
 
-$Main = $Html->__div__('', ['class' => 'container']);
-$Main->appendChild($Jumbotron);
+$Rasba->setHead(function ($Html) {
+    return [
+        $Html->createElement('title', 'RastaBaba')
+    ];
+});
 
-$Html->addBody($Main);
-$Html->run(true, false);
-?>
+$Rasba->setNotFound(function ($Request, $Rasba) {
+    $Hello = $Rasba->h1('Aradığınız sayfayı bulamadık!');
+    $Rasba->addBody($Hello);
+});
+
+
+$Rasba->get('/', function ($Request, $Rasba, $Match) use ($Session) {
+    $Rasba->changeTitle('Home');
+
+    $Logged = $Session->get('logged', false);
+    if ($Logged) {
+        $Hello = $Rasba->h1('Welcome to RastaBaba!');
+        $Rasba->addBody($Hello);
+    } else {
+        $Hello = $Rasba->h1('Login');
+        $Form = $Rasba->form('', ['action' => '/login', 'method' => 'post']);
+        $Form->appendChild([
+            $Rasba->__label__('Username:', ['for' => 'user']),
+            $Rasba->__input__('', ['type' => 'text', 'name' => 'user']),
+            $Rasba->br(),
+            $Rasba->__label__('Password:', ['for' => 'pass']),
+            $Rasba->__input__('', ['type' => 'text', 'name' => 'pass']),
+            $Rasba->br(),
+            $Rasba->__input__('', ['type' => 'submit', 'text' => 'Submit']),
+        ]);
+    
+        $Rasba->addBody([$Hello, $Form]);    
+    }
+});
+
+$Rasba->post('/login', function ($Request, $Rasba, $Match) use($Session) {
+    if ($Request->request->get('user') == 'rasta' && $Request->request->get('pass') == 'baba') {
+        $Hello = $Rasba->h1('Welcome to RastaBaba!');
+        $Rasba->addBody($Hello);
+        $Session->set('logged', true);
+    } else {
+        $Hello = $Rasba->h1('Invalid user or pass');
+        $Rasba->addBody($Hello);    
+    }
+});
+
+$Rasba->run();

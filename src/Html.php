@@ -3,31 +3,43 @@ namespace Rasba;
 use DiDom\Document;
 use Tholu\Packer\Packer;
 
-define('JQUERY_SLIM', 'https://code.jquery.com/jquery-3.4.1.slim.min.js');
-define('BOOTSTRAP_MIN', 'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css');
-
 class Html {
     public $Document;
+    public $Response;
     public $Head;
     public $Body;
-    public $RasbaJS;
+    public $RasbaJS = true;
     public $Run;
+    public $settings = [];
 
-    public function __construct($rasbajs = true, $attr = []) {
+    public function __construct($response, $attr = [], $head, $settings = []) {
+        $this->Response = $response;
         $this->Document = new Document();
         $this->Html = $this->Document->createElement('html', '', $attr);
 
         $this->Head = $this->Document->createElement('head');
+        if (!empty($head)) {
+            $this->Head->appendChild($head($this->Document));
+        }
+
         $this->Body = $this->Document->createElement('body');
-        $this->RasbaJS = $rasbajs === true ? "window.onload = function() {" : false;
         $this->ids = [];
-        $this->Run = false;
+
+        if ($this->RasbaJS) {
+            $this->RasbaJS = new JavaScript();
+        }
+
+        foreach ($settings as $setting => $value) {
+            $this->settings[$setting] = $value;
+        }
+
+        if (!array_key_exists('minify', $this->settings)) {
+            $this->settings['minify'] = true;
+        }
     }
 
     public function __call($tag, $in) {
-        if ($this->Run) return;
-
-        $main_attr = substr($tag, -strlen('__')) === '__' ? [] : ['id' => $tag . ' ' . $this->randomName()];
+        $main_attr = substr($tag, -strlen('__')) === '__' ? [] : ['id' => $this->randomName()];
         if (count($in) >= 1) {
             if (!empty($in[1]) && is_array($in[1])) {
                 if (!empty($in[1])) unset($in[1]['id']);
@@ -38,14 +50,31 @@ class Html {
             
             if (substr($tag, 0, strlen('__')) === '__' || substr($tag, -strlen('__')) === '__') {
                 return $this->Document->createElement(str_replace('__', '', $tag), $in[0], $attr);
-            } else if ($this->RasbaJS) {
-                if ($in[0] !== '') $this->RasbaJS .= 'document.getElementById("' . $attr['id'] . '").innerHTML = "' . addslashes($in[0]) . '";';
+            } else if ($this->RasbaJS !== false) {
+                $this->RasbaJS->addElement($attr['id'], $in[0], $attr);
+                return $this->Document->createElement($tag, '', $main_attr);
+            } else {
+                return $this->Document->createElement($tag, $in[0], $attr);
+            }
+        } else {
+            return $this->Document->createElement($tag, '', $main_attr);
+        }
+    }
+
+    public function add($tag, ...$in) {
+        $main_attr = substr($tag, -strlen('__')) === '__' ? [] : ['id' => $this->randomName()];
+        if (count($in) >= 1) {
+            if (!empty($in[1]) && is_array($in[1])) {
+                if (!empty($in[1])) unset($in[1]['id']);
+                $attr = $main_attr + $in[1];
+            } else {
+                $attr = $main_attr;
+            }
             
-                array_walk($attr, function ($value, $att) use($attr) {
-                    if ($att == 'id') return;
-                    $this->RasbaJS .= 'document.getElementById("' . $attr['id'] . '").setAttribute("' . addslashes($att) . '", "' . addslashes($value) . '");';
-                });
-                
+            if (substr($tag, 0, strlen('__')) === '__' || substr($tag, -strlen('__')) === '__') {
+                return $this->Document->createElement(str_replace('__', '', $tag), $in[0], $attr);
+            } else if ($this->RasbaJS !== false) {
+                $this->RasbaJS->addElement($attr['id'], $in[0], $attr);
                 return $this->Document->createElement($tag, '', $main_attr);
             } else {
                 return $this->Document->createElement($tag, $in[0], $attr);
@@ -69,29 +98,42 @@ class Html {
         return $id;
     }
 
-    public function run($echo = true, $minify = true) {  
-        if ($minify) {
-            $packer = new Packer($this->RasbaJS . '};', 'Normal', true, false, true);
-            $packer = $packer->pack();
-        } else {
-            $packer = $this->RasbaJS . '};';
-        }
-
-        if ($this->RasbaJS) {
-            $Script = $this->Document->createElement('script', $packer);     
+    public function run() { 
+        if ($this->RasbaJS !== false) {
+            $Script = $this->Document->createElement('script', $this->RasbaJS->getResult($this->settings['minify']), ['type' => 'text/javascript']);
             $this->addBody($Script);    
         }
 
         $this->Html->appendChild([
             $this->Head, $this->Body
         ]);
-
-        $this->Run = true;
         
-        if ($echo) echo '<!doctype html>' . $this->Html->html(); else return '<!doctype html>' . $this->Html->html();
+        $this->Run = true;
+        $this->Response->setContent('<!doctype html>' . $this->Html->html());
+        $this->Response->send();
     }
     
-    public function addScript($script, $file = false, $attr = []) {
+    public function addBody($element) {
+        if ($this->Run) return;
+        return $this->Body->appendChild($element);
+    }
+
+    public function changeTitle($title, $attr = []) {
+        if ($this->Run) return;
+        if ($this->Head->has('title')) {
+            $this->Head->firstInDocument('title')->remove();
+        }
+        $element = $this->__title__($title, $attr);
+        $this->addHead($element);
+        return $element;
+    }
+
+    public function addHead($element) {
+        if ($this->Run) return;
+        return $this->Head->appendChild($element);
+    }
+
+    public function addScript($script, $file = false, $appendChild = true, $attr = []) {
         if ($this->Run) return;
         if ($file && file_exists($file)) {
             $style = $this->__link__('', ['src' => $script] + $attr);
@@ -101,21 +143,10 @@ class Html {
             $style = $this->__script__($script, NULL, false);
         }
 
-        return $this->Head->appendChild($style);
+        return $appendChild ? $this->Head->appendChild($style) : $style;
     }
 
-
-    public function addBody($element) {
-        if ($this->Run) return;
-        return $this->Body->appendChild($element);
-    }
-
-    public function addHead($element) {
-        if ($this->Run) return;
-        return $this->Head->appendChild($element);
-    }
-
-    public function addStyle($style, $file = false, $attr = []) {
+    public function addStyle($style, $file = false, $appendChild = true, $attr = []) {
         if ($this->Run) return;
 
         if ($file && file_exists($file)) {
@@ -126,6 +157,6 @@ class Html {
             $style = $this->__style__($style);
         }
 
-        return $this->Head->appendChild($style);
+        return $appendChild ? $this->Head->appendChild($style) : $style;
     }
 }

@@ -21,7 +21,9 @@
     "license": "GPL-3.0-or-later",
     "require": {
         "imangazaliev/didom": "^1.16",
-        "tholu/php-packer": "^0.2.0"
+        "tholu/php-packer": "^0.2.0",
+        "spatie/regex": "^1.4",
+        "symfony/http-foundation": "^5.2"
     },
     "autoload": {
         "psr-4": {
