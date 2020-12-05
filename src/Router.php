@@ -51,7 +51,12 @@ class Router {
             $response->setStatusCode(404);
             $request = Request::createFromGlobals();
             $rasba = new Html($response, [], $this->head);
-            $this->nf[0]($request, $rasba);
+            if (count($this->nf) >= 1) {
+                $this->nf[0]($request, $rasba);
+            } else {
+                $h1 = $rasba->h1('404: Not Found!');
+                $rasba->addBody($h1);
+            }   
             $rasba->run();
         } 
     }

@@ -1,7 +1,7 @@
 <?php
 namespace Rasba;
 use DiDom\Document;
-use Tholu\Packer\Packer;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class Html {
     public $Document;
@@ -99,6 +99,7 @@ class Html {
     }
 
     public function run() { 
+        if ($this->Run) return;
         if ($this->RasbaJS !== false) {
             $Script = $this->Document->createElement('script', $this->RasbaJS->getResult($this->settings['minify']), ['type' => 'text/javascript']);
             $this->addBody($Script);    
@@ -158,5 +159,12 @@ class Html {
         }
 
         return $appendChild ? $this->Head->appendChild($style) : $style;
+    }
+
+    public function runAndReturnJson($array, $options = 0) {
+        $this->Response->headers->set('Content-Type', 'application/json');
+        $this->Run = true;
+        $this->Response->setContent(json_encode($array, $options));
+        $this->Response->send();
     }
 }
