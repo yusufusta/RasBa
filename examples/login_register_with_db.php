@@ -20,7 +20,7 @@ $Rasba->setHead(function ($Html) {
 });
 
 $Rasba->setNotFound(function ($Request, $Rasba) {
-    $Hello = $Rasba->h1('Aradığınız sayfayı bulamadık!');
+    $Hello = $Rasba->h1('WTF! Where Am I?');
     $Rasba->addBody($Hello);
 });
 
