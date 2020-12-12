@@ -11,6 +11,9 @@ class Html {
     public $RasbaJS = true;
     public $Run;
     public $settings = [];
+    public $db;
+    public $database;
+    public $Db;
 
     public function __construct($response, $attr = [], $head, $settings = []) {
         $this->Response = $response;
@@ -25,16 +28,28 @@ class Html {
         $this->Body = $this->Document->createElement('body');
         $this->ids = [];
 
-        if ($this->RasbaJS) {
-            $this->RasbaJS = new JavaScript();
-        }
-
         foreach ($settings as $setting => $value) {
             $this->settings[$setting] = $value;
         }
 
-        if (!array_key_exists('minify', $this->settings)) {
-            $this->settings['minify'] = true;
+        if (!array_key_exists('rasbajs', $this->settings)) {
+            $this->settings['rasbajs'] = [];
+        }
+
+        if ($this->settings['rasbajs'] !== false) {
+            $this->RasbaJS = new JavaScript($this->settings['rasbajs']);
+        } else {
+            $this->RasbaJS = false;
+        }
+
+        if (array_key_exists('database', $this->settings)) {
+            if (!is_array($this->settings['database'])) {
+                throw new Exception('Invalid Database', 2, null, 'DataBase infos are must be array', 'DataBase infos are must be array.');
+            } else {
+                $this->db = \ParagonIE\EasyDB\Factory::fromArray($this->settings['database']);   
+                $this->Db = $this->db;
+                $this->database = $this->db;
+            }
         }
     }
 
@@ -62,7 +77,12 @@ class Html {
     }
 
     public function add($tag, ...$in) {
-        $main_attr = substr($tag, -strlen('__')) === '__' ? [] : ['id' => $this->randomName()];
+        if (substr($tag, -2) === '__' || $this->settings['rasbajs'] == false) {
+            $main_attr = [];
+        } else {
+            $main_attr = ['id' => $this->randomName()];
+        }
+
         if (count($in) >= 1) {
             if (!empty($in[1]) && is_array($in[1])) {
                 if (!empty($in[1])) unset($in[1]['id']);
@@ -101,7 +121,7 @@ class Html {
     public function run() { 
         if ($this->Run) return;
         if ($this->RasbaJS !== false) {
-            $Script = $this->Document->createElement('script', $this->RasbaJS->getResult($this->settings['minify']), ['type' => 'text/javascript']);
+            $Script = $this->Document->createElement('script', $this->RasbaJS->getResult(), ['type' => 'text/javascript']);
             $this->addBody($Script);    
         }
 

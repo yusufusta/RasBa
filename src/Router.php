@@ -36,7 +36,7 @@ class Router {
         foreach ($this->routers as $router) {
             $match = Regex::match('~^' . $router[1][0] . '$~ixs', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
             if ((is_array($router[0]) && count(array_diff($router[0], $this->allowMethods)) !== count($this->allowMethods)) ||
-            (in_array($router[0], $this->allowMethods)) && $match->hasMatch()) {
+            (in_array($router[0], $this->allowMethods)) && ($router[0] == 'ANY' || (is_array($router[0]) && in_array($_SERVER['REQUEST_METHOD'], $router[0])) || $_SERVER['REQUEST_METHOD'] == $router[0]) && $match->hasMatch()) {
                 $request = Request::createFromGlobals();
                 $rasba = new Html(new Response(), $this->rasbaHtmlSettings['html_attr'], $this->head, $this->rasbaHtmlSettings);
                 $router[1][1]($request, $rasba, $match);

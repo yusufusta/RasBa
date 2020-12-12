@@ -8,6 +8,7 @@ Build fast, small, uncomplicated websites.
 - [X] Easy, small
 - [X] Advanced DOM
 - [X] Anti-Scrap (like Vue)
+- [X] DataBase
 
 ## 📦 Install
 You can easily install with [Composer](https://getcomposer.org/).
@@ -16,15 +17,12 @@ composer require quiec/rasba
 ```
 
 ## 🔎 Examples
-You should check `examples` folder also simple a title:
+You should check `[examples](https://github.com/Quiec/RasBa/tree/master/examples)` folder. Also simple a title:
 ```php
 <?php
 require './vendor/autoload.php';
 
-$Rasba = new Rasba\Router([
-    'html_attr' => ['lang' => 'en'],
-    'minify' => true
-]);
+$Rasba = new Rasba\Router();
 
 
 $Rasba->get('/', function ($Request, $Rasba, $Match) {
@@ -39,6 +37,19 @@ $Rasba->post('/saymyname/(.*)', function ($Request, $Rasba, $Match) {
 
 $Rasba->run();
 ```
+
+## ✏ .htaccess
+You need edit `.htaccess` file like this:
+```
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
+```
+
+> index.php should be your rasba file.
+
+## ✅ To-Do
+- [ ]  Documantion
 
 ## 👨‍💻 Author
 [Yusuf Usta](https://github.com/quiec)
