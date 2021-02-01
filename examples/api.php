@@ -1,7 +1,9 @@
 <?php
 require '../vendor/autoload.php';
 
-$rasbajs = false;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+$rasbajs = true;
 $Rasba = new Rasba\Router([
     'html_attr' => ['lang' => 'en'],
     'rasbajs' => $rasbajs ? [] : false
@@ -28,7 +30,7 @@ $Rasba->get('/', function ($Request, $Rasba, $Match) use ($rasbajs) {
 });
 
 $Rasba->get('/json', function ($Request, $Rasba, $Match) {
-    $Rasba->runAndReturnJson(['ip' => $Request->getClientIp(), 'time' => time()]);    
+    $Rasba->runAndReturnJson(['ip' => $Request->getClientIp(), 'time' => time()]);
 });
 
 $Rasba->run();

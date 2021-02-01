@@ -1,5 +1,6 @@
 <?php
 require '../vendor/autoload.php';
+
 use Symfony\Component\HttpFoundation\Session\Session;
 
 $Session = new Session();
@@ -9,7 +10,7 @@ $Rasba = new Rasba\Router([
     'database' => [
         'mysql:host=localhost;dbname=db',
         'root',
-        ''    
+        ''
     ]
 ]);
 
@@ -46,8 +47,8 @@ $Rasba->get('/', function ($Request, $Rasba, $Match) use ($Session) {
             $Rasba->br(),
             $Rasba->__a__('Register', ['href' => '/register']),
         ]);
-    
-        $Rasba->addBody([$Hello, $Form]);    
+
+        $Rasba->addBody([$Hello, $Form]);
     }
 });
 
@@ -70,38 +71,39 @@ $Rasba->get('/register', function ($Request, $Rasba, $Match) use ($Session) {
             $Rasba->br(),
             $Rasba->__input__('', ['type' => 'submit', 'text' => 'Submit']),
         ]);
-    
-        $Rasba->addBody([$Hello, $Form]);    
+
+        $Rasba->addBody([$Hello, $Form]);
     }
 });
 
-$Rasba->post('/register', function ($Request, $Rasba, $Match) use($Session) {
+$Rasba->post('/register', function ($Request, $Rasba, $Match) use ($Session) {
     if ($Request->request->get('user', NULL) !== NULL && $Request->request->get('pass', NULL) !== NULL) {
         $userData = $Rasba->Db->row(
             "SELECT * FROM uyeler WHERE username = ?",
             $Request->request->get('user')
         );
-        
+
         if (empty($userData)) {
             $Rasba->db->insert('uyeler', ['username' => $Request->request->get('user'), 'password' => $Request->request->get('pass')]);
             $Hello = $Rasba->h1('Registered. Please Log In.');
             $Rasba->Response->headers->set('Refresh', '2; url=/');
-            $Rasba->addBody($Hello);    
+            $Rasba->addBody($Hello);
         } else {
             $Hello = $Rasba->h1('Invalid username (already registered)');
             $Rasba->Response->headers->set('Refresh', '2; url=/');
-            $Rasba->addBody($Hello);    
+            $Rasba->addBody($Hello);
         }
     } else {
         $Hello = $Rasba->h1('Invalid user or pass');
-        $Rasba->addBody($Hello);    
+        $Rasba->addBody($Hello);
     }
 });
 
-$Rasba->post('/', function ($Request, $Rasba, $Match) use($Session) {
+$Rasba->post('/', function ($Request, $Rasba, $Match) use ($Session) {
     $userData = $Rasba->Db->row(
         "SELECT * FROM uyeler WHERE username = ? AND password = ?",
-        $Request->request->get('user', NULL), $Request->request->get('pass', NULL)
+        $Request->request->get('user', NULL),
+        $Request->request->get('pass', NULL)
     );
 
     if (!empty($userData)) {
@@ -113,7 +115,7 @@ $Rasba->post('/', function ($Request, $Rasba, $Match) use($Session) {
     } else {
         $Hello = $Rasba->h1('Invalid user or pass');
         $Rasba->Response->headers->set('Refresh', '3; url=/');
-        $Rasba->addBody($Hello);    
+        $Rasba->addBody($Hello);
     }
 });
 

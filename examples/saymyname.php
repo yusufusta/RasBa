@@ -1,8 +1,6 @@
 <?php
 require '../vendor/autoload.php';
-
 $Rasba = new Rasba\Router(['html_attr' => ['lang' => 'en']]);
-
 
 $Rasba->get('/', function ($Request, $Rasba, $Match) {
     $Rasba->Response->setStatusCode(302);
