@@ -1,16 +1,16 @@
 # RasBa
 
-Build fast, small, uncomplicated websites.
+Build fast, small, uncomplicated websites. Bridge with PHP and JS.
 
 ## ✨ Features
 
-> With RasbaHTML, the page is almost blank. All texts and variables are added while the page is loading (with RasbaJS)
+> With RasbaHTML, the page is almost blank. All texts and variables are added while the page is loading (with RasbaJS). You can disable it.
 
 - [x] Router
 - [x] Easy, small
-- [x] Advanced DOM
-- [x] Anti-Scrap (like Vue)
+- [x] Anti-Scrap
 - [x] DataBase
+- [ ] More JS function
 
 ## 📦 Install
 
@@ -30,14 +30,8 @@ require './vendor/autoload.php';
 
 $Rasba = new Rasba\Router();
 
-$Rasba->get('/', function ($Request, $Rasba, $Match) {
-    $Rasba->Response->setStatusCode(302);
-    $Rasba->Response->headers->set('Location', '/saymyname/Heisenberg');
-});
-
-$Rasba->post('/saymyname/(.*)', function ($Request, $Rasba, $Match) {
-    $Hello = $Rasba->h1(rawurldecode($Match->group(1)));
-    $Rasba->addBody($Hello);
+$Rasba->get('/', function ($Request, $Rasba) {
+    $Rasba->h1('Hello World!')->toBody();
 });
 
 $Rasba->run();
