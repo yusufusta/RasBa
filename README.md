@@ -17,7 +17,7 @@ Build fast, small, uncomplicated websites. Bridge with PHP and JS.
 You can easily install with [Composer](https://getcomposer.org/).
 
 ```sh
-composer require quiec/rasba
+composer require yusufusta/rasba
 ```
 
 ## 🔎 Examples
