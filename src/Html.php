@@ -4,26 +4,45 @@ namespace Rasba;
 
 class Html
 {
+    /**
+     * @var mixed
+     */
     public $Response;
+    /**
+     * @var mixed
+     */
     public $RasbaJS = true;
+    /**
+     * @var mixed
+     */
     public $Run = false;
 
-    public function __construct($response, $Settings = [], $Match = NULL)
+    /**
+     * @var mixed
+     */
+    public $Request = null;
+
+    /**
+     * @param $response
+     * @param array $Settings
+     * @param $Match
+     */
+    public function __construct($Response, $Settings = [], $Request = null, $Vars = [])
     {
-        $this->Response = $response;
+        $this->Response = $Response;
         $this->Settings = $Settings;
-        $this->Match = $Match;
+        $this->Request = $Request;
+        $this->Vars = $Vars;
 
-        $this->Html = new Element('html', '', empty($Settings['attrs']['html']) ? [] : $Settings['attrs']['html'], $this);
-        $this->Head = new Element('head', '', empty($Settings['attrs']['head']) ? [] : $Settings['attrs']['head'], $this);
-        $this->Body = new Element('body', '', empty($Settings['attrs']['body']) ? [] : $Settings['attrs']['body'], $this);
+        $this->Html = new Element('html', '', $Settings['attrs']['html'] ?? [], $this);
+        $this->Head = new Element('head', '', $Settings['attrs']['head'] ?? [], $this);
+        $this->Body = new Element('body', '', $Settings['attrs']['body'] ?? [], $this);
         $this->ids = [];
-
 
         if (array_key_exists('rasbajs', $this->Settings) && $this->Settings['rasbajs'] === false) {
             $this->RasbaJS = false;
         } else {
-            $this->RasbaJS = new JavaScript(empty($this->Settings['rasbajs']) ? [] : $this->Settings['rasbajs']);
+            $this->RasbaJS = new JavaScript($this->Settings['rasbajs'] ?? []);
         }
 
         if (array_key_exists('database', $this->Settings)) {
@@ -49,13 +68,27 @@ class Html
                 $this->Body->addChild($this->Settings['body_top']);
             }
         }
+
+        $this->latte = new \Latte\Engine;
+        if (array_key_exists('latte', $this->Settings)) {
+            $this->latte->setTempDirectory($this->Settings['latte']['temp'] ?? __DIR__ . '/_views_temp/');
+        } else {
+            $this->latte->setTempDirectory(__DIR__ . '/_views_temp/');
+        }
     }
 
+    /**
+     * @param $tag
+     * @param $in
+     */
     public function __call($tag, $in)
     {
         $dontUseRasbaJS = false;
         if (substr($tag, 0, 2) === '__' || $this->RasbaJS === false) {
-            if (substr($tag, 0, 2) === '__') $tag = substr($tag, 2);
+            if (substr($tag, 0, 2) === '__') {
+                $tag = substr($tag, 2);
+            }
+
             $attr = [];
             $dontUseRasbaJS = true;
         } else {
@@ -64,7 +97,10 @@ class Html
 
         if (count($in) >= 1) {
             if (!empty($in[1]) && is_array($in[1])) {
-                if (!$dontUseRasbaJS) unset($in[1]['id']);
+                if (!$dontUseRasbaJS) {
+                    unset($in[1]['id']);
+                }
+
                 $attr = array_merge($attr, $in[1]);
             }
 
@@ -79,7 +115,11 @@ class Html
         }
     }
 
-    public function randomName($len = NULL)
+    /**
+     * @param $len
+     * @return mixed
+     */
+    public function randomName($len = null)
     {
         if (!empty($this->Settings['random_id_len'])) {
             if (is_array($this->Settings['random_id_len'])) {
@@ -89,9 +129,9 @@ class Html
             }
         }
 
-        $len == NULL ? $len = rand(5, 14) : $len = $len;
+        $len == null ? $len = rand(5, 14) : $len = $len;
 
-        while (True) {
+        while (true) {
             $id = substr(str_shuffle(str_repeat(empty($this->Settings['random_id_str']) ? "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" : $this->Settings['random_id_str'], 4)), 0, $len);
             if (!in_array($id, $this->ids)) {
                 $this->ids[] = $id;
@@ -102,21 +142,41 @@ class Html
         return $id;
     }
 
+    /**
+     * @param $elements
+     * @return null
+     */
     public function addBody($elements)
     {
-        if ($this->Run) return;
+        if ($this->Run) {
+            return;
+        }
+
         $this->Body->addChild($elements);
     }
 
+    /**
+     * @param $elements
+     * @return null
+     */
     public function addHead($elements)
     {
-        if ($this->Run) return;
+        if ($this->Run) {
+            return;
+        }
+
         $this->Head->addChild($elements);
     }
 
+    /**
+     * @return null
+     */
     public function run()
     {
-        if ($this->Run) return;
+        if ($this->Run) {
+            return;
+        }
+
         if (!empty($this->Settings['body_bottom'])) {
             if ($this->Settings['body_bottom'] instanceof \Closure) {
                 $this->Body->addChild(call_user_func($this->Settings['body_bottom'], $this));
@@ -131,7 +191,7 @@ class Html
         }
 
         $this->Html->addChild([
-            $this->Head, $this->Body
+            $this->Head, $this->Body,
         ]);
 
         $this->Run = true;
@@ -139,23 +199,42 @@ class Html
         $this->Response->send();
     }
 
+    /**
+     * @param $script
+     * @param $file
+     * @param false $appendChild
+     * @param array $attr
+     * @return mixed
+     */
     public function addScript($script, $file = false, $appendChild = true, $attr = [])
     {
-        if ($this->Run) return;
+        if ($this->Run) {
+            return;
+        }
+
         if ($file && file_exists($file)) {
             $style = $this->__script__('', ['src' => $script] + $attr);
         } else if (filter_var($script, FILTER_VALIDATE_URL)) {
             $style = $this->__script__('', ['src' => $script] + $attr);
         } else if (!$file) {
-            $style = $this->__script__($script, NULL, false);
+            $style = $this->__script__($script, null, false);
         }
 
         return $appendChild ? $this->Head->appendChild($style) : $style;
     }
 
+    /**
+     * @param $style
+     * @param $file
+     * @param false $appendChild
+     * @param array $attr
+     * @return mixed
+     */
     public function addStyle($style, $file = false, $appendChild = true, $attr = [])
     {
-        if ($this->Run) return;
+        if ($this->Run) {
+            return;
+        }
 
         if ($file && file_exists($file)) {
             $style = $this->__link__('', ['rel' => 'stylesheet', 'href' => $style] + $attr);
@@ -168,11 +247,28 @@ class Html
         return $appendChild ? $this->Head->appendChild($style) : $style;
     }
 
-    public function runAndReturnJson($array, $options = 0)
+    /**
+     * @param $array
+     * @param $options
+     */
+    public function returnJson($array, $options = 0)
     {
         $this->Response->headers->set('Content-Type', 'application/json');
         $this->Run = true;
         $this->Response->setContent(json_encode($array, $options));
+        $this->Response->send();
+    }
+
+    /**
+     * @param $view
+     * @param array $data
+     */
+    public function returnView($view, $data = [])
+    {
+        $this->Response->headers->set('Content-Type', 'text/html');
+        $this->Run = true;
+        $html = $this->latte->renderToString($view, $data);
+        $this->Response->setContent($html);
         $this->Response->send();
     }
 }

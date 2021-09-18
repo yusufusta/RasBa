@@ -3,8 +3,9 @@ require '../vendor/autoload.php';
 
 $Rasba = new Rasba\Router();
 
-$Rasba->get('/api', function ($Request, $Rasba) {
-    $Rasba->runAndReturnJson(['ip' => $Request->getClientIp(), 'time' => time()]);
+$Rasba->get('/api', function ($Rasba) {
+    $Request = $Rasba->Request;
+    $Rasba->returnJson(['ip' => $Request->getClientIp(), 'time' => time()]);
 });
 
 $Rasba->run();

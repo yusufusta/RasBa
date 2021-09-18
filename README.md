@@ -8,8 +8,9 @@ Build fast, small, uncomplicated websites. Bridge with PHP and JS.
 
 - [x] Router
 - [x] Easy, small
-- [x] Anti-Scrap
-- [x] DataBase
+- [x] Anti-Scrap / RasbaJs
+- [x] [DataBase](https://github.com/paragonie/easydb)
+- [x] [Template Engine](https://latte.nette.org/)
 - [ ] More JS function
 
 ## 📦 Install
@@ -26,11 +27,11 @@ You should check [examples](https://github.com/Quiec/RasBa/tree/master/examples)
 
 ```php
 <?php
-require './vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 $Rasba = new Rasba\Router();
 
-$Rasba->get('/', function ($Request, $Rasba) {
+$Rasba->get('/', function ($Rasba) {
     $Rasba->h1('Hello World!')->toBody();
 });
 
