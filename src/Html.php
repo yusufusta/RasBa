@@ -2,6 +2,9 @@
 
 namespace Rasba;
 
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+
 class Html
 {
     /**
@@ -253,8 +256,9 @@ class Html
      */
     public function returnJson($array, $options = 0)
     {
-        $this->Response->headers->set('Content-Type', 'application/json');
         $this->Run = true;
+
+        $this->Response->headers->set('Content-Type', 'application/json');
         $this->Response->setContent(json_encode($array, $options));
         $this->Response->send();
     }
@@ -265,10 +269,57 @@ class Html
      */
     public function returnView($view, $data = [])
     {
-        $this->Response->headers->set('Content-Type', 'text/html');
         $this->Run = true;
-        $html = $this->latte->renderToString($view, $data);
-        $this->Response->setContent($html);
+
+        $this->Response->headers->set('Content-Type', 'text/html');
+        $this->Response->setContent($this->latte->renderToString($view, $data));
+        $this->Response->send();
+    }
+
+    /**
+     * @param $path
+     * @param $mime
+     */
+    public function returnFile($path, $mime = null)
+    {
+        $this->Run = true;
+
+        $this->Response->headers->set('Content-Type', $mime == null ? mime_content_type($path) : $mime);
+        $this->Response->setContent(file_get_contents($path));
+        $this->Response->send();
+    }
+
+    /**
+     * @param $code
+     */
+    public function returnHttpError($code)
+    {
+        $this->Run = true;
+
+        $response = new Response();
+        $response->setStatusCode($code);
+        $request = Request::createFromGlobals();
+        $rasba = new Html($response, $this->Settings, $request);
+
+        if (!empty($this->Settings['errors'][$code])) {
+            call_user_func($this->Settings['errors'][$code], $rasba);
+        } else {
+            $rasba->h1($code)->toBody();
+        }
+
+        $rasba->run();
+    }
+
+    /**
+     * @param $url
+     * @param $status
+     */
+    public function returnRedirect($url, $status = 302)
+    {
+        $this->Run = true;
+
+        $this->Response->headers->set('Location', $url);
+        $this->Response->setStatusCode($status);
         $this->Response->send();
     }
 }
