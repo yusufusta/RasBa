@@ -116,11 +116,24 @@ class Router
             }
 
             $rasba->run();
-        } else if (FastRoute\Dispatcher::FOUND) {
+        } else if ($routeInfo[0] == FastRoute\Dispatcher::FOUND) {
             $response = new Response();
             $request = Request::createFromGlobals();
             $rasba = new Html($response, $this->rasbaHtmlSettings, $request, $routeInfo[2] ?? []);
             call_user_func($routeInfo[1], $rasba);
+            $rasba->run();
+        } else {
+            $response = new Response();
+            $response->setStatusCode(405);
+            $request = Request::createFromGlobals();
+            $rasba = new Html($response, $this->rasbaHtmlSettings, $request);
+
+            if (!empty($this->rasbaHtmlSettings['errors'][405])) {
+                call_user_func($this->rasbaHtmlSettings['errors'][405], $rasba);
+            } else {
+                $rasba->h1('404: Method Not Allowed!')->toBody();
+            }
+
             $rasba->run();
         }
     }
